@@ -7,6 +7,11 @@ type Token struct {
 	Literal string
 }
 
+var keywords = map[string]TokenType{
+	"fn":  FUNCTION,
+	"let": LET,
+}
+
 // Token types
 const (
 	ILLEGAL = "ILLEGAL" // token/char we don't know about
@@ -38,4 +43,11 @@ func New(tokenType TokenType, ch byte) Token {
 		Type:    tokenType,
 		Literal: string(ch),
 	}
+}
+
+func LookupIdent(ident string) TokenType {
+	if tok, ok := keywords[ident]; ok {
+		return tok
+	}
+	return IDENT
 }

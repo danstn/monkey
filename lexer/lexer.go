@@ -21,22 +21,34 @@ func (l *Lexer) NextToken() token.Token {
 	l.skipWhitespace()
 
 	switch l.ch {
+	case '+':
+		tok = token.New(token.PLUS, l.ch)
+	case '-':
+		tok = token.New(token.MINUS, l.ch)
+	case '*':
+		tok = token.New(token.STAR, l.ch)
+	case '/':
+		tok = token.New(token.SLASH, l.ch)
 	case '=':
 		tok = token.New(token.ASSIGN, l.ch)
-	case ';':
-		tok = token.New(token.SEMICOLON, l.ch)
+	case '>':
+		tok = token.New(token.GT, l.ch)
+	case '<':
+		tok = token.New(token.LT, l.ch)
 	case '(':
 		tok = token.New(token.LPAREN, l.ch)
 	case ')':
 		tok = token.New(token.RPAREN, l.ch)
-	case ',':
-		tok = token.New(token.COMMA, l.ch)
-	case '+':
-		tok = token.New(token.PLUS, l.ch)
 	case '{':
 		tok = token.New(token.LBRACE, l.ch)
 	case '}':
 		tok = token.New(token.RBRACE, l.ch)
+	case '!':
+		tok = token.New(token.BANG, l.ch)
+	case ',':
+		tok = token.New(token.COMMA, l.ch)
+	case ';':
+		tok = token.New(token.SEMICOLON, l.ch)
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF

@@ -29,8 +29,6 @@ func (l *Lexer) NextToken() token.Token {
 		tok = token.New(token.STAR, l.ch)
 	case '/':
 		tok = token.New(token.SLASH, l.ch)
-	case '=':
-		tok = token.New(token.ASSIGN, l.ch)
 	case '>':
 		tok = token.New(token.GT, l.ch)
 	case '<':
@@ -43,8 +41,24 @@ func (l *Lexer) NextToken() token.Token {
 		tok = token.New(token.LBRACE, l.ch)
 	case '}':
 		tok = token.New(token.RBRACE, l.ch)
+	case '=':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			tok.Literal = string(ch) + string(l.ch)
+			tok.Type = token.EQ
+		} else {
+			tok = token.New(token.ASSIGN, l.ch)
+		}
 	case '!':
-		tok = token.New(token.BANG, l.ch)
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			tok.Literal = string(ch) + string(l.ch)
+			tok.Type = token.NEQ
+		} else {
+			tok = token.New(token.BANG, l.ch)
+		}
 	case ',':
 		tok = token.New(token.COMMA, l.ch)
 	case ';':
@@ -100,6 +114,14 @@ func (l *Lexer) readIdentifier() string {
 
 func (l *Lexer) readNumber() string {
 	return l.readWhile(isDigit)
+}
+
+func (l *Lexer) peekChar() byte {
+	if l.nextPosition >= len(l.input) {
+		return 0
+	} else {
+		return l.input[l.nextPosition]
+	}
 }
 
 func isLetter(ch byte) bool {

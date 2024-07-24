@@ -35,6 +35,8 @@ const (
 	SLASH  = "/"
 	GT     = ">"
 	LT     = "<"
+	EQ     = "=="
+	NEQ    = "!="
 
 	// delimeters
 	COMMA     = ","

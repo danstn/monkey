@@ -41,8 +41,6 @@ func TestLetStatements(t *testing.T) {
 }
 
 func assertLetStatement(t *testing.T, s ast.Statement, name string) {
-	t.Helper()
-
 	test.AssertEqual(t, s.TokenLiteral(), "let")
 
 	letStatement, ok := s.(*ast.LetStatement)

@@ -12,6 +12,7 @@ type Parser struct {
 	peekToken token.Token
 }
 
+// New creates a new parser given an initialised lexer.
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l}
 

@@ -2,7 +2,7 @@ package ast
 
 import "monkey/token"
 
-// NODE
+// Node
 // -----------------------------------------------------------------------------
 
 type Node interface {
@@ -30,7 +30,7 @@ type Expression interface {
 	expressionNode()
 }
 
-// IMPLEMENTATION
+// Program
 // -----------------------------------------------------------------------------
 
 // Program is the root node of every AST.
@@ -46,6 +46,9 @@ func (p *Program) TokenLiteral() string {
 	}
 }
 
+// LetStatement
+// -----------------------------------------------------------------------------
+
 type LetStatement struct {
 	Token token.Token // token.LET token
 	Name  *Identifier
@@ -55,6 +58,9 @@ type LetStatement struct {
 func (ls *LetStatement) statementNode()       {}
 func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal }
 
+// Identifier
+// -----------------------------------------------------------------------------
+
 type Identifier struct {
 	Token token.Token // token.IDENT token
 	Value string
@@ -62,3 +68,14 @@ type Identifier struct {
 
 func (i *Identifier) expressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
+
+// ReturnStatement
+// -----------------------------------------------------------------------------
+
+type ReturnStatement struct {
+	Token token.Token // token.RETURN token
+	Value Expression
+}
+
+func (rs *ReturnStatement) statementNode()       {}
+func (rs *ReturnStatement) TokenLiteral() string { return rs.Token.Literal }

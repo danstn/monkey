@@ -16,14 +16,10 @@ func TestLetStatements(t *testing.T) {
 
 	l := lexer.New(input)
 	p := New(l)
-
 	program := p.ParseProgram()
-	assertProgramNoErrors(t, p)
 
-	if program == nil {
-		t.Fatalf("ParseProgram() returned nil")
-	}
-
+	assertParserNoErrors(t, p)
+	assertProgramNotNil(t, program)
 	assertProgramStatements(t, program, 3)
 
 	tests := []struct {
@@ -51,12 +47,8 @@ func TestReturnStatements(t *testing.T) {
 	p := New(l)
 
 	program := p.ParseProgram()
-	assertProgramNoErrors(t, p)
-
-	if program == nil {
-		t.Fatalf("ParseProgram() returned nil")
-	}
-
+	assertParserNoErrors(t, p)
+	assertProgramNotNil(t, program)
 	assertProgramStatements(t, program, 3)
 
 	for _, stmt := range program.Statements {
@@ -77,7 +69,8 @@ func TestIdentifierExpression(t *testing.T) {
 	p := New(l)
 	program := p.ParseProgram()
 
-	assertProgramNoErrors(t, p)
+	assertParserNoErrors(t, p)
+	assertProgramNotNil(t, program)
 	assertProgramStatements(t, program, 1)
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
@@ -100,6 +93,14 @@ func TestIdentifierExpression(t *testing.T) {
 }
 
 // Assetion helpers
+// -----------------------------------------------------------------------------
+
+func assertProgramNotNil(t *testing.T, program *ast.Program) {
+	t.Helper()
+	if program == nil {
+		t.Fatalf("program is nil")
+	}
+}
 
 func assertProgramStatements(t *testing.T, program *ast.Program, want int) {
 	t.Helper()
@@ -120,7 +121,7 @@ func assertLetStatement(t *testing.T, s ast.Statement, name string) {
 	test.AssertEqual(t, letStatement.Name.TokenLiteral(), name)
 }
 
-func assertProgramNoErrors(t *testing.T, p *Parser) {
+func assertParserNoErrors(t *testing.T, p *Parser) {
 	errors := p.Errors()
 	if len(errors) == 0 {
 		return

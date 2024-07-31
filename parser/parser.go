@@ -8,12 +8,31 @@ import (
 	"strings"
 )
 
+type (
+	prefixParseFn func() ast.Expression
+	// the argument is "left side" of the infix operator being parsed
+	infixParseFn func(ast.Expression) ast.Expression
+)
+
 type Parser struct {
-	l         *lexer.Lexer
-	errors    []string // TODO: extend to add row/col
-	progress  []string // literal progress of what is being parsed at the moment
+	l *lexer.Lexer
+
+	errors   []string // TODO: extend to add row/col
+	progress []string // literal progress of what is being parsed at the moment
+
 	currToken token.Token
 	peekToken token.Token
+
+	prefixParseFns map[token.TokenType]prefixParseFn
+	infixParseFns  map[token.TokenType]infixParseFn
+}
+
+func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
+	p.prefixParseFns[tokenType] = fn
+}
+
+func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
+	p.infixParseFns[tokenType] = fn
 }
 
 // New creates a new parser given an initialised lexer.

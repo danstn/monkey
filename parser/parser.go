@@ -8,6 +8,18 @@ import (
 	"strings"
 )
 
+// operator precedence
+const (
+	_ int = iota
+	LOWEST
+	EQUALS  // ==
+	LTGT    // < or >
+	SUM     // +
+	PRODUCT // *
+	PREFIX  // -X or !X
+	CALL    // someFunction(X)
+)
+
 type (
 	prefixParseFn func() ast.Expression
 	// the argument is "left side" of the infix operator being parsed
@@ -42,6 +54,9 @@ func New(l *lexer.Lexer) *Parser {
 		errors: []string{},
 	}
 
+	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+	p.registerPrefix(token.IDENT, p.parseIdentifier)
+
 	// read two tokens, so currToken and peekToken are both set
 	p.advance()
 	p.advance()
@@ -67,6 +82,9 @@ func (p *Parser) flushProgress() {
 	p.progress = []string{}
 }
 
+// Top Level Parsers
+// -----------------------------------------------------------------------------
+
 func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
@@ -89,9 +107,12 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.RETURN:
 		return p.parseReturnStatement()
 	default:
-		return nil
+		return p.parseExpressionStatement()
 	}
 }
+
+// Specific Parsers
+// -----------------------------------------------------------------------------
 
 // let x = 5;
 func (p *Parser) parseLetStatement() *ast.LetStatement {
@@ -133,6 +154,36 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 	return stmt
 }
+
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	stmt := &ast.ExpressionStatement{Token: p.currToken}
+
+	stmt.Expression = p.parseExpression(LOWEST)
+
+	// we want expression statements to have optional semicolons, which makes
+	// it easier to type in REPL
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.advance()
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	prefix := p.prefixParseFns[p.currToken.Type]
+	if prefix == nil {
+		return nil
+	}
+	leftExp := prefix()
+	return leftExp
+}
+
+func (p *Parser) parseIdentifier() ast.Expression {
+	return &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
+}
+
+// Helpers
+// -----------------------------------------------------------------------------
 
 func (p *Parser) currTokenIs(t token.TokenType) bool {
 	return p.currToken.Type == t

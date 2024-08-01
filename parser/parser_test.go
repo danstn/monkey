@@ -117,6 +117,33 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	test.AssertEqual(t, literal.TokenLiteral(), "5")
 }
 
+func TestParsingPrefixExpressions(t *testing.T) {
+	prefixTests := []struct {
+		input        string
+		operator     string
+		integerValue int64
+	}{
+		{"!5;", "!", 5},
+		{"-15;", "-", 15},
+	}
+
+	for _, tt := range prefixTests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		assertParserNoErrors(t, p)
+		assertProgramNotNil(t, program)
+		assertProgramStatements(t, program, 1)
+
+		_, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement, got=%T", program.Statements[0])
+		}
+
+		// TODO: finish this test...
+	}
+}
+
 // Assetion helpers
 // -----------------------------------------------------------------------------
 

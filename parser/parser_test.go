@@ -92,6 +92,31 @@ func TestIdentifierExpression(t *testing.T) {
 	}
 }
 
+func TestIntegerLiteralExpression(t *testing.T) {
+	input := "5;"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+
+	assertParserNoErrors(t, p)
+	assertProgramNotNil(t, program)
+	assertProgramStatements(t, program, 1)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement, got=%T", program.Statements[0])
+	}
+
+	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("expression is not &ast.IntegerLiteral, got=%T", stmt.Expression)
+	}
+
+	test.AssertEqual(t, literal.Value, 5)
+	test.AssertEqual(t, literal.TokenLiteral(), "5")
+}
+
 // Assetion helpers
 // -----------------------------------------------------------------------------
 

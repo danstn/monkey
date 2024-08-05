@@ -21,6 +21,17 @@ const (
 	CALL    // someFunction(X)
 )
 
+var precedences = map[token.TokenType]int{
+	token.EQ:    EQUALS,
+	token.NEQ:   EQUALS,
+	token.LT:    LTGT,
+	token.GT:    LTGT,
+	token.PLUS:  SUM,
+	token.MINUS: SUM,
+	token.STAR:  PRODUCT,
+	token.SLASH: PRODUCT,
+}
+
 type (
 	prefixParseFn func() ast.Expression
 	// the argument is "left side" of the infix operator being parsed
@@ -218,11 +229,6 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 // Helpers
 // -----------------------------------------------------------------------------
 
-func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-	msg := fmt.Sprintf("no prefix parse function for %s found", t)
-	p.errors = append(p.errors, msg)
-}
-
 func (p *Parser) currTokenIs(t token.TokenType) bool {
 	return p.currToken.Type == t
 }
@@ -244,4 +250,23 @@ func (p *Parser) advanceIfPeekIs(t token.TokenType) bool {
 		p.peekError(t)
 		return false
 	}
+}
+
+func (p *Parser) noPrefixParseFnError(t token.TokenType) {
+	msg := fmt.Sprintf("no prefix parse function for %s found", t)
+	p.errors = append(p.errors, msg)
+}
+
+func (p *Parser) peekPrecedence() int {
+	if precedence, ok := precedences[p.peekToken.Type]; ok {
+		return precedence
+	}
+	return LOWEST
+}
+
+func (p *Parser) currPrecedence() int {
+	if precedence, ok := precedences[p.currToken.Type]; ok {
+		return precedence
+	}
+	return LOWEST
 }

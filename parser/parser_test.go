@@ -74,7 +74,7 @@ func TestIdentifierExpression(t *testing.T) {
 	assertProgramNotNil(t, program)
 	assertProgramStatements(t, program, 1)
 
-	stmt := assertIsExpressionStatement(t, program.Statements[0])
+	stmt := assertExpressionStatement(t, program.Statements[0])
 
 	ident, ok := stmt.Expression.(*ast.Identifier)
 	if !ok {
@@ -101,7 +101,7 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	assertProgramNotNil(t, program)
 	assertProgramStatements(t, program, 1)
 
-	stmt := assertIsExpressionStatement(t, program.Statements[0])
+	stmt := assertExpressionStatement(t, program.Statements[0])
 
 	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
 	if !ok {
@@ -130,7 +130,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
 		assertProgramNotNil(t, program)
 		assertProgramStatements(t, program, 1)
 
-		stmt := assertIsExpressionStatement(t, program.Statements[0])
+		stmt := assertExpressionStatement(t, program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.PrefixExpression)
 		if !ok {
@@ -167,14 +167,25 @@ func TestParsingInfixExpressions(t *testing.T) {
 		assertProgramNotNil(t, program)
 		assertProgramStatements(t, program, 1)
 
-		_ = assertIsExpressionStatement(t, program.Statements[0])
+		stmt := assertExpressionStatement(t, program.Statements[0])
+
+		exp, ok := stmt.Expression.(*ast.InfixExpression)
+		if !ok {
+			t.Fatalf("exp is not ast.InfixExpression, got %T", stmt.Expression)
+		}
+
+		assertIntegerLiteral(t, exp.Left, tt.leftValue)
+		if exp.Operator != tt.operator {
+			t.Fatalf("exp.Operator is not '%s', got=%s", tt.operator, exp.Operator)
+		}
+		assertIntegerLiteral(t, exp.Right, tt.rightValue)
 	}
 }
 
 // Assetion helpers
 // -----------------------------------------------------------------------------
 
-func assertIsExpressionStatement(t *testing.T, statement ast.Statement) *ast.ExpressionStatement {
+func assertExpressionStatement(t *testing.T, statement ast.Statement) *ast.ExpressionStatement {
 	t.Helper()
 	stmt, ok := statement.(*ast.ExpressionStatement)
 	if !ok {

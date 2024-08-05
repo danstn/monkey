@@ -74,10 +74,7 @@ func TestIdentifierExpression(t *testing.T) {
 	assertProgramNotNil(t, program)
 	assertProgramStatements(t, program, 1)
 
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement, got=%T", program.Statements[0])
-	}
+	stmt := assertIsExpressionStatement(t, program.Statements[0])
 
 	ident, ok := stmt.Expression.(*ast.Identifier)
 	if !ok {
@@ -104,10 +101,7 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	assertProgramNotNil(t, program)
 	assertProgramStatements(t, program, 1)
 
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement, got=%T", program.Statements[0])
-	}
+	stmt := assertIsExpressionStatement(t, program.Statements[0])
 
 	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
 	if !ok {
@@ -136,10 +130,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
 		assertProgramNotNil(t, program)
 		assertProgramStatements(t, program, 1)
 
-		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement, got=%T", program.Statements[0])
-		}
+		stmt := assertIsExpressionStatement(t, program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.PrefixExpression)
 		if !ok {
@@ -152,8 +143,45 @@ func TestParsingPrefixExpressions(t *testing.T) {
 	}
 }
 
+func TestParsingInfixExpressions(t *testing.T) {
+	infixTests := []struct {
+		input      string
+		leftValue  int64
+		operator   string
+		rightValue int64
+	}{
+		{"5 + 5", 5, "+", 5},
+		{"5 - 5", 5, "-", 5},
+		{"5 * 5", 5, "*", 5},
+		{"5 / 5", 5, "/", 5},
+		{"5 > 5", 5, ">", 5},
+		{"5 < 5", 5, "<", 5},
+		{"5 == 5", 5, "==", 5},
+		{"5 != 5", 5, "!=", 5},
+	}
+
+	for _, tt := range infixTests {
+		p := New(lexer.New(tt.input))
+		program := p.ParseProgram()
+		assertParserNoErrors(t, p)
+		assertProgramNotNil(t, program)
+		assertProgramStatements(t, program, 1)
+
+		_ = assertIsExpressionStatement(t, program.Statements[0])
+	}
+}
+
 // Assetion helpers
 // -----------------------------------------------------------------------------
+
+func assertIsExpressionStatement(t *testing.T, statement ast.Statement) *ast.ExpressionStatement {
+	t.Helper()
+	stmt, ok := statement.(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("statement is not ast.ExpressionStatement, got %T", statement)
+	}
+	return stmt
+}
 
 func assertIntegerLiteral(t *testing.T, il ast.Expression, value int64) {
 	t.Helper()

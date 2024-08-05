@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"monkey/ast"
 	"monkey/lexer"
 	"monkey/test"
@@ -135,17 +136,36 @@ func TestParsingPrefixExpressions(t *testing.T) {
 		assertProgramNotNil(t, program)
 		assertProgramStatements(t, program, 1)
 
-		_, ok := program.Statements[0].(*ast.ExpressionStatement)
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 		if !ok {
 			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement, got=%T", program.Statements[0])
 		}
 
-		// TODO: finish this test...
+		exp, ok := stmt.Expression.(*ast.PrefixExpression)
+		if !ok {
+			t.Fatalf("stmt is not at.PrefixExpression, got=%T", stmt.Expression)
+		}
+		if op := exp.Operator; op != tt.operator {
+			t.Fatalf("exp.Operator is not '%s', got=%s", tt.operator, op)
+		}
+		assertIntegerLiteral(t, exp.Right, tt.integerValue)
 	}
 }
 
 // Assetion helpers
 // -----------------------------------------------------------------------------
+
+func assertIntegerLiteral(t *testing.T, il ast.Expression, value int64) {
+	t.Helper()
+	integ, ok := il.(*ast.IntegerLiteral)
+	if !ok {
+		t.Errorf("il not *ast.IntegerLiteral, got=%T", il)
+		return
+	}
+
+	test.AssertEqual(t, integ.Value, value)
+	test.AssertEqual(t, integ.TokenLiteral(), fmt.Sprintf("%d", value))
+}
 
 func assertProgramNotNil(t *testing.T, program *ast.Program) {
 	t.Helper()

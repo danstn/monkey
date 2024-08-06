@@ -5,6 +5,7 @@
 - only 2 statements: let and return; everything else is an expression
 - int support only
 - using top down operator precedence (or: Pratt parsing)
+- using precedence map to find "nuds" and "leds" (null and left denotations)
 
 ## Links
 

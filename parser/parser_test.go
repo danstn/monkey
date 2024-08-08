@@ -313,6 +313,29 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 	}
 }
 
+func TestIfExpression(t *testing.T) {
+	input := `if (x < y) { x }`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+
+	assertParserNoErrors(t, p)
+	assertProgramNotNil(t, program)
+	assertProgramStatements(t, program, 1)
+
+	stmt := assertExpressionStatement(t, program.Statements[0])
+	exp, ok := stmt.Expression.(*ast.IfExpression)
+	if !ok {
+		t.Fatalf("exp is not ast.IfExpression, got %T", stmt.Expression)
+	}
+
+	if exp.Consequence == nil {
+		t.Fatalf("consequence is required")
+	}
+
+}
+
 // Assetion helpers
 // -----------------------------------------------------------------------------
 

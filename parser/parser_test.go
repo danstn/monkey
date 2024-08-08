@@ -112,6 +112,34 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	test.AssertEqual(t, literal.TokenLiteral(), "5")
 }
 
+func TestBoolLiteralExpression(t *testing.T) {
+	input := "true; false;"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+
+	assertParserNoErrors(t, p)
+	assertProgramNotNil(t, program)
+	assertProgramStatements(t, program, 2)
+
+	stmt1 := assertExpressionStatement(t, program.Statements[0])
+	lit1, ok := stmt1.Expression.(*ast.BoolLiteral)
+	if !ok {
+		t.Fatalf("expression is not &ast.BoolLiteral, got=%T", stmt1.Expression)
+	}
+	test.AssertEqual(t, lit1.Value, true)
+	test.AssertEqual(t, lit1.TokenLiteral(), "true")
+
+	stmt2 := assertExpressionStatement(t, program.Statements[1])
+	lit2, ok := stmt2.Expression.(*ast.BoolLiteral)
+	if !ok {
+		t.Fatalf("expression is not &ast.BoolLiteral, got=%T", stmt1.Expression)
+	}
+	test.AssertEqual(t, lit2.Value, false)
+	test.AssertEqual(t, lit2.TokenLiteral(), "false")
+}
+
 func TestParsingPrefixExpressions(t *testing.T) {
 	prefixTests := []struct {
 		input        string

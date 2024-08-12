@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"monkey/ast"
 	"monkey/lexer"
 	"monkey/test"
@@ -202,11 +201,7 @@ func TestParsingInfixExpressions(t *testing.T) {
 			t.Fatalf("exp is not ast.InfixExpression, got %T", stmt.Expression)
 		}
 
-		assertIntegerLiteral(t, exp.Left, tt.leftValue)
-		if exp.Operator != tt.operator {
-			t.Fatalf("exp.Operator is not '%s', got=%s", tt.operator, exp.Operator)
-		}
-		assertIntegerLiteral(t, exp.Right, tt.rightValue)
+		assertInfixExpression(t, exp, tt.leftValue, tt.operator, tt.rightValue)
 	}
 }
 
@@ -334,74 +329,4 @@ func TestIfExpression(t *testing.T) {
 		t.Fatalf("consequence is required")
 	}
 
-}
-
-// Assetion helpers
-// -----------------------------------------------------------------------------
-
-func assertExpressionStatement(t *testing.T, statement ast.Statement) *ast.ExpressionStatement {
-	t.Helper()
-	stmt, ok := statement.(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf("statement is not ast.ExpressionStatement, got %T", statement)
-	}
-	return stmt
-}
-
-func assertIntegerLiteral(t *testing.T, il ast.Expression, value int64) {
-	t.Helper()
-	integ, ok := il.(*ast.IntegerLiteral)
-	if !ok {
-		t.Errorf("il not *ast.IntegerLiteral, got=%T", il)
-		return
-	}
-
-	test.AssertEqual(t, integ.Value, value)
-	test.AssertEqual(t, integ.TokenLiteral(), fmt.Sprintf("%d", value))
-}
-
-func assertProgramNotNil(t *testing.T, program *ast.Program) {
-	t.Helper()
-	if program == nil {
-		t.Fatalf("program is nil")
-	}
-}
-
-func assertProgramStatements(t *testing.T, program *ast.Program, want int) {
-	t.Helper()
-	if got := len(program.Statements); got != want {
-		t.Fatalf("program has an unexpected # of statements: got=%d, want=%d", got, want)
-	}
-}
-
-func assertLetStatement(t *testing.T, s ast.Statement, name string) {
-	test.AssertEqual(t, s.TokenLiteral(), "let")
-
-	letStatement, ok := s.(*ast.LetStatement)
-	if !ok {
-		t.Errorf("s not *ast.LetStatement, got=%T", s)
-	}
-
-	test.AssertEqual(t, letStatement.Name.Value, name)
-	test.AssertEqual(t, letStatement.Name.TokenLiteral(), name)
-}
-
-func assertParserNoErrors(t *testing.T, p *Parser) {
-	t.Helper()
-	errors := p.Errors()
-	if len(errors) == 0 {
-		return
-	}
-
-	t.Errorf("parser has %d errors:", len(errors))
-	var sep string
-	for i, msg := range errors {
-		if i == len(errors)-1 {
-			sep = "└──"
-		} else {
-			sep = "├──"
-		}
-		t.Errorf("\t%s %s", sep, msg)
-	}
-	t.FailNow()
 }

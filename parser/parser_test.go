@@ -325,8 +325,57 @@ func TestIfExpression(t *testing.T) {
 		t.Fatalf("exp is not ast.IfExpression, got %T", stmt.Expression)
 	}
 
-	if exp.Consequence == nil {
-		t.Fatalf("consequence is required")
+	assertInfixExpression(t, exp.Condition, "x", "<", "y")
+	if n := len(exp.Consequence.Statements); n != 1 {
+		t.Errorf("consequence is not 1 statements. got=%d\n", n)
 	}
 
+	consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("consequence statement is not ast.ExpressionStatement, got=%T", exp.Consequence.Statements[0])
+	}
+
+	assertIdentifier(t, consequence.Expression, "x")
+
+	test.AssertEqual(t, exp.Alternative, nil)
+
+}
+
+func TestIfElseExpression(t *testing.T) {
+	input := `if (x < y) { x } else { y }`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+
+	assertParserNoErrors(t, p)
+	assertProgramNotNil(t, program)
+	assertProgramStatements(t, program, 1)
+
+	stmt := assertExpressionStatement(t, program.Statements[0])
+	exp, ok := stmt.Expression.(*ast.IfExpression)
+	if !ok {
+		t.Fatalf("exp is not ast.IfExpression, got %T", stmt.Expression)
+	}
+
+	assertInfixExpression(t, exp.Condition, "x", "<", "y")
+	if n := len(exp.Consequence.Statements); n != 1 {
+		t.Errorf("consequence is not 1 statements. got=%d\n", n)
+	}
+
+	consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("consequence statement is not ast.ExpressionStatement, got=%T", exp.Consequence.Statements[0])
+	}
+
+	assertIdentifier(t, consequence.Expression, "x")
+
+	test.AssertNotEqual(t, exp.Alternative, nil)
+
+	alternative, ok := exp.Alternative.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("alternative statement is not ast.ExpressionStatement, got=%T", exp.Alternative.Statements[0])
+	}
+
+	assertIdentifier(t, alternative.Expression, "y")
 }

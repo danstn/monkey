@@ -75,6 +75,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.FALSE, p.parseBoolLiteral)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.IF, p.parseIfExpression)
+	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -148,7 +149,7 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	stmt := &ast.LetStatement{Token: p.currToken}
 
 	// ensure next token is identifier and advance
-	if !p.advanceIfPeekIs(token.NAME) {
+	if !p.advanceIfNextTokenIs(token.NAME) {
 		return nil
 	}
 
@@ -158,7 +159,7 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	}
 
 	// ensure next token is '=' and advance
-	if !p.advanceIfPeekIs(token.ASSIGN) {
+	if !p.advanceIfNextTokenIs(token.ASSIGN) {
 		return nil
 	}
 
@@ -192,7 +193,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 
 	// we want expression statements to have optional semicolons, which makes
 	// it easier to type in REPL
-	if p.peekTokenIs(token.SEMICOLON) {
+	if p.nextTokenIs(token.SEMICOLON) {
 		p.advance()
 	}
 
@@ -208,7 +209,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	}
 	leftExp := prefix()
 
-	for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
+	for !p.nextTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
 		infix := p.infixParseFns[p.peekToken.Type]
 		if infix == nil {
 			return leftExp
@@ -227,7 +228,7 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 
 	exp := p.parseExpression(LOWEST)
 
-	if !p.advanceIfPeekIs(token.RPAREN) {
+	if !p.advanceIfNextTokenIs(token.RPAREN) {
 		return nil
 	}
 
@@ -294,27 +295,27 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 func (p *Parser) parseIfExpression() ast.Expression {
 	expression := &ast.IfExpression{Token: p.currToken}
 
-	if !p.advanceIfPeekIs(token.LPAREN) {
+	if !p.advanceIfNextTokenIs(token.LPAREN) {
 		return nil
 	}
 
 	p.advance()
 	expression.Condition = p.parseExpression(LOWEST)
 
-	if !p.advanceIfPeekIs(token.RPAREN) {
+	if !p.advanceIfNextTokenIs(token.RPAREN) {
 		return nil
 	}
 
-	if !p.advanceIfPeekIs(token.LBRACE) {
+	if !p.advanceIfNextTokenIs(token.LBRACE) {
 		return nil
 	}
 
 	expression.Consequence = p.parseBlockStatement()
 
-	if p.peekTokenIs(token.ELSE) {
+	if p.nextTokenIs(token.ELSE) {
 		p.advance()
 
-		if !p.advanceIfPeekIs(token.LBRACE) {
+		if !p.advanceIfNextTokenIs(token.LBRACE) {
 			return nil
 		}
 
@@ -340,6 +341,51 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	return block
 }
 
+func (p *Parser) parseFunctionLiteral() ast.Expression {
+	fn := &ast.FunctionLiteral{Token: p.currToken}
+
+	if !p.advanceIfNextTokenIs(token.LPAREN) {
+		return nil
+	}
+
+	fn.Parameters = p.parseFunctionParameters()
+
+	if !p.advanceIfNextTokenIs(token.LBRACE) {
+		return nil
+	}
+
+	fn.Body = p.parseBlockStatement()
+
+	return fn
+}
+
+func (p *Parser) parseFunctionParameters() []*ast.Identifier {
+	identifiers := []*ast.Identifier{}
+
+	// ()
+	if p.nextTokenIs(token.RPAREN) {
+		p.advance()
+		return identifiers
+	}
+
+	p.advance()
+	ident := &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
+	identifiers = append(identifiers, ident)
+
+	for p.nextTokenIs(token.COMMA) {
+		p.advance() // ,
+		p.advance() // ident
+		ident := &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
+		identifiers = append(identifiers, ident)
+	}
+
+	if !p.advanceIfNextTokenIs(token.RPAREN) {
+		return nil
+	}
+
+	return identifiers
+}
+
 // Helpers
 // -----------------------------------------------------------------------------
 
@@ -347,7 +393,7 @@ func (p *Parser) currTokenIs(t token.TokenType) bool {
 	return p.currToken.Type == t
 }
 
-func (p *Parser) peekTokenIs(t token.TokenType) bool {
+func (p *Parser) nextTokenIs(t token.TokenType) bool {
 	return p.peekToken.Type == t
 }
 
@@ -356,8 +402,8 @@ func (p *Parser) peekError(t token.TokenType) {
 	p.errors = append(p.errors, msg)
 }
 
-func (p *Parser) advanceIfPeekIs(t token.TokenType) bool {
-	if p.peekTokenIs(t) {
+func (p *Parser) advanceIfNextTokenIs(t token.TokenType) bool {
+	if p.nextTokenIs(t) {
 		p.advance()
 		return true
 	} else {

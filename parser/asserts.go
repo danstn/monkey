@@ -32,6 +32,18 @@ func assertIntegerLiteral(t *testing.T, il ast.Expression, value int64) {
 	test.AssertEqual(t, integ.TokenLiteral(), fmt.Sprintf("%d", value))
 }
 
+func assertBoolLiteral(t *testing.T, il ast.Expression, value bool) {
+	t.Helper()
+	lit, ok := il.(*ast.BoolLiteral)
+	if !ok {
+		t.Errorf("il not *ast.BoolLiteral, got=%T", il)
+		return
+	}
+
+	test.AssertEqual(t, lit.Value, value)
+	test.AssertEqual(t, lit.TokenLiteral(), fmt.Sprintf("%v", value))
+}
+
 func assertProgramNotNil(t *testing.T, program *ast.Program) {
 	t.Helper()
 	if program == nil {
@@ -97,6 +109,8 @@ func assertIdentifier(t *testing.T, exp ast.Expression, want string) {
 func assertLiteralExpression(t *testing.T, exp ast.Expression, expected interface{}) {
 	t.Helper()
 	switch v := expected.(type) {
+	case bool:
+		assertBoolLiteral(t, exp, v)
 	case int:
 		assertIntegerLiteral(t, exp, int64(v))
 	case int64:

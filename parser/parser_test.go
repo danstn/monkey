@@ -8,31 +8,28 @@ import (
 )
 
 func TestLetStatements(t *testing.T) {
-	input := `
-		let x = 5;
-		let y = 10;
-		let foo = 838383;
-	`
-
-	l := lexer.New(input)
-	p := New(l)
-	program := p.ParseProgram()
-
-	assertParserNoErrors(t, p)
-	assertProgramNotNil(t, program)
-	assertProgramStatements(t, program, 3)
-
 	tests := []struct {
+		input              string
 		expectedIdentifier string
+		expectedValue      interface{}
 	}{
-		{"x"},
-		{"y"},
-		{"foo"},
+		{"let x = 5;", "x", 5},
+		{"let y = true;", "y", true},
+		{"let foobar = y;", "foobar", "y"},
 	}
 
-	for i, tt := range tests {
-		statement := program.Statements[i]
-		assertLetStatement(t, statement, tt.expectedIdentifier)
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+
+		assertParserNoErrors(t, p)
+		assertProgramNotNil(t, program)
+		assertProgramStatements(t, program, 1)
+
+		stmt := program.Statements[0]
+		assertLetStatement(t, stmt, tt.expectedIdentifier)
+		assertLiteralExpression(t, stmt.(*ast.LetStatement).Value, tt.expectedValue)
 	}
 }
 

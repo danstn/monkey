@@ -165,8 +165,11 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		return nil
 	}
 
-	// TODO: implement expression parsing
-	for !p.currTokenIs(token.SEMICOLON) {
+	p.advance()
+
+	stmt.Value = p.parseExpression(LOWEST)
+
+	for p.nextTokenIs(token.SEMICOLON) {
 		p.advance()
 	}
 
@@ -179,8 +182,9 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 	p.advance()
 
-	// TODO: implement expression parsing
-	for !p.currTokenIs(token.SEMICOLON) {
+	stmt.ReturnValue = p.parseExpression(LOWEST)
+
+	for p.nextTokenIs(token.SEMICOLON) {
 		p.advance()
 	}
 

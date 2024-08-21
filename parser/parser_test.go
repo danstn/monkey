@@ -347,7 +347,6 @@ func TestIfElseExpression(t *testing.T) {
 	l := lexer.New(input)
 	p := New(l)
 	program := p.ParseProgram()
-
 	assertParserNoErrors(t, p)
 	assertProgramNotNil(t, program)
 	assertProgramStatements(t, program, 1)
@@ -378,4 +377,34 @@ func TestIfElseExpression(t *testing.T) {
 	}
 
 	assertIdentifier(t, alternative.Expression, "y")
+}
+
+func TestFunctionLiteralParsing(t *testing.T) {
+	input := `fn(x, y) { x + y; }`
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	assertParserNoErrors(t, p)
+	assertProgramNotNil(t, program)
+	assertProgramStatements(t, program, 1)
+
+	stmt := assertExpressionStatement(t, program.Statements[0])
+
+	// assert expression type
+	fn, ok := stmt.Expression.(*ast.FunctionLiteral)
+	if !ok {
+		t.Fatalf("expression is not ast.FunctionLiteral, got=%T", fn)
+	}
+
+	// assert params
+	test.AssertEqual(t, len(fn.Parameters), 2)
+	assertLiteralExpression(t, fn.Parameters[0], "x")
+	assertLiteralExpression(t, fn.Parameters[1], "y")
+
+	// assert body
+	test.AssertEqual(t, len(fn.Body.Statements), 1)
+	body := assertExpressionStatement(t, fn.Body.Statements[0])
+	assertInfixExpression(t, body.Expression, "x", "+", "y")
 }

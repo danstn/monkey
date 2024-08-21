@@ -22,14 +22,15 @@ const (
 )
 
 var precedences = map[token.TokenType]int{
-	token.EQ:    EQUALS,
-	token.NEQ:   EQUALS,
-	token.LT:    LTGT,
-	token.GT:    LTGT,
-	token.PLUS:  SUM,
-	token.MINUS: SUM,
-	token.STAR:  PRODUCT,
-	token.SLASH: PRODUCT,
+	token.EQ:     EQUALS,
+	token.NEQ:    EQUALS,
+	token.LT:     LTGT,
+	token.GT:     LTGT,
+	token.PLUS:   SUM,
+	token.MINUS:  SUM,
+	token.STAR:   PRODUCT,
+	token.SLASH:  PRODUCT,
+	token.LPAREN: CALL,
 }
 
 type (
@@ -86,6 +87,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.NEQ, p.parseInfixExpression)
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
+	p.registerInfix(token.LPAREN, p.parseCallExpression)
 
 	// read two tokens, so currToken and peekToken are both set
 	p.advance()
@@ -384,6 +386,44 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 	}
 
 	return identifiers
+}
+
+func (p *Parser) parseCallExpression(fn ast.Expression) ast.Expression {
+	return &ast.CallExpression{
+		Token:     p.currToken,
+		Function:  fn,
+		Arguments: p.parseCallArguments(),
+	}
+}
+
+func (p *Parser) parseCallArguments() []ast.Expression {
+	args := []ast.Expression{}
+
+	// ()
+	// ^
+	if p.nextTokenIs(token.RPAREN) {
+		p.advance()
+		return args
+	}
+
+	// ( x, ... )
+	//   ^
+	p.advance()
+	args = append(args, p.parseExpression(LOWEST))
+
+	// ( x, ... )
+	//   ^
+	for p.nextTokenIs(token.COMMA) {
+		p.advance()
+		p.advance()
+		args = append(args, p.parseExpression(LOWEST))
+	}
+
+	if !p.advanceIfNextTokenIs(token.RPAREN) {
+		return nil
+	}
+
+	return args
 }
 
 // Helpers

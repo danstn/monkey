@@ -408,3 +408,29 @@ func TestFunctionLiteralParsing(t *testing.T) {
 	body := assertExpressionStatement(t, fn.Body.Statements[0])
 	assertInfixExpression(t, body.Expression, "x", "+", "y")
 }
+
+func TetFunctionParameterParsing(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedParams []string
+	}{
+		{input: "fn() {};", expectedParams: []string{}},
+		{input: "fn(x) {};", expectedParams: []string{"x"}},
+		{input: "fn(x, y, z) {};", expectedParams: []string{"x", "y", "z"}},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		assertParserNoErrors(t, p)
+		assertProgramNotNil(t, program)
+		exp := assertExpressionStatement(t, program.Statements[0])
+		fn := exp.Expression.(*ast.FunctionLiteral)
+		test.AssertEqual(t, len(fn.Parameters), len(tt.expectedParams))
+
+		for i, ident := range tt.expectedParams {
+			assertLiteralExpression(t, fn.Parameters[i], ident)
+		}
+	}
+}
